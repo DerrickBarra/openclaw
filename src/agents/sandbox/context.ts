@@ -98,6 +98,7 @@ async function ensureSandboxWorkspaceLayout(params: {
     resolveSandboxWorkspaceLayoutPaths({
       cfg,
       rawSessionKey,
+      agentId: params.agentId,
       workspaceDir: params.workspaceDir,
     });
 

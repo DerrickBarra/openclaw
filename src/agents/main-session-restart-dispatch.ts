@@ -20,7 +20,6 @@ import { createSubsystemLogger } from "../logging/subsystem.js";
 import { findRestartRecoveryUnsafeReplyHook } from "../plugins/restart-recovery-hook-safety.js";
 import { withPluginRuntimeRegistryScope } from "../plugins/runtime/gateway-request-scope.js";
 import { CommandLane } from "../process/lanes.js";
-import { resolveAgentIdFromSessionKey } from "../routing/session-key.js";
 import { MAIN_SESSION_RESTART_RECOVERY_SOURCE_TOOL } from "../sessions/input-provenance.js";
 import { resolveSendPolicy } from "../sessions/send-policy.js";
 import {
@@ -29,7 +28,7 @@ import {
   type DeliveryContext,
 } from "../utils/delivery-context.shared.js";
 import { isDeliverableMessageChannel } from "../utils/message-channel.js";
-import { resolveAgentWorkspaceDir, resolveDefaultAgentId } from "./agent-scope.js";
+import { resolveAgentWorkspaceDir } from "./agent-scope.js";
 import { buildMainSessionRecoveryClearPatch } from "./main-session-recovery-clear.js";
 import {
   repairMainSessionRecoveryMutation,
@@ -71,6 +70,7 @@ export function requiresRestartRecoveryMessageActionAuthority(entry: SessionEntr
 }
 
 export function resolveRestartRecoveryResumeBlockReason(params: {
+  agentId: string;
   cfg?: OpenClawConfig;
   entry: SessionEntry;
   sessionKey: string;
@@ -98,13 +98,9 @@ export function resolveRestartRecoveryResumeBlockReason(params: {
   }
   let pluginRegistry: ReturnType<typeof loadAgentRuntimePluginRegistryHandle>;
   try {
-    const agentId = resolveAgentIdFromSessionKey(
-      params.sessionKey,
-      resolveDefaultAgentId(params.cfg),
-    );
     pluginRegistry = loadAgentRuntimePluginRegistryHandle({
       config: params.cfg,
-      workspaceDir: resolveAgentWorkspaceDir(params.cfg, agentId),
+      workspaceDir: resolveAgentWorkspaceDir(params.cfg, params.agentId),
       allowGatewaySubagentBinding: true,
     });
   } catch {
@@ -382,6 +378,7 @@ function scheduleRestartRecoveryReservationRollback(
 }
 
 export async function resumeMainSession(params: {
+  agentId: string;
   canonicalSessionKey?: string;
   cfg?: OpenClawConfig;
   entry: SessionEntry;
@@ -515,6 +512,7 @@ export async function resumeMainSession(params: {
         : "skipped";
     }
     const agentParams: AgentRunRequest = {
+      agentId: params.agentId,
       message: buildResumeMessage(sanitizedPendingText),
       sessionKey: dispatchSessionKey,
       expectedExistingSessionId: params.entry.sessionId,
