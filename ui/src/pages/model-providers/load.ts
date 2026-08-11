@@ -5,7 +5,7 @@ import type { UsageSummary } from "../../../../src/infra/provider-usage.types.js
 import type { SessionModelUsage } from "../../../../src/infra/session-cost-usage.types.js";
 import type { GatewayBrowserClient } from "../../api/gateway.ts";
 import type { ConfigSnapshot, ModelAuthStatusResult, ModelCatalogEntry } from "../../api/types.ts";
-import { resolveEditableSnapshotConfig } from "../../lib/config/index.ts";
+import { resolveEditableSnapshotConfig } from "../../lib/config/config-state-model.ts";
 import {
   formatMissingOperatorReadScopeMessage,
   isMissingOperatorReadScopeError,
