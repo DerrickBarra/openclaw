@@ -5,7 +5,7 @@ import {
   resolveSubagentLabel,
   sortSubagentRuns,
 } from "../../../auto-reply/reply/subagents-utils.js";
-import { resolveStorePath } from "../../../config/sessions/paths.js";
+import { resolveSessionStorePathCore } from "../../../config/sessions/paths.js";
 import { loadSessionEntry, patchSessionEntry } from "../../../config/sessions/session-accessor.js";
 import type { SessionEntry } from "../../../config/sessions/types.js";
 import type { OpenClawConfig } from "../../../config/types.openclaw.js";
@@ -1287,7 +1287,9 @@ export async function sendControlledSubagentMessage(params: {
 
   const targetSessionKey = params.entry.childSessionKey;
   const parsed = parseAgentSessionKey(targetSessionKey);
-  const storePath = resolveStorePath(params.cfg.session?.store, { agentId: parsed?.agentId });
+  const storePath = resolveSessionStorePathCore(params.cfg.session?.store, {
+    agentId: parsed?.agentId,
+  });
   const targetSessionEntry = loadSessionEntry({
     storePath,
     sessionKey: targetSessionKey,

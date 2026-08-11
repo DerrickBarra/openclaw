@@ -5,7 +5,7 @@ import {
 import { replaceGenericExternalRunFailureText } from "../agents/failover/user-copy.js";
 import { copyReplyPayloadMetadata, getReplyPayloadMetadata } from "../auto-reply/reply-payload.js";
 import { buildRecoverablePendingFinalDeliveryText } from "../auto-reply/reply/pending-final-delivery.js";
-import { sendDurableMessageBatch } from "../channels/message/runtime.js";
+import { sendDurableMessageBatchCore } from "../channels/message/runtime.js";
 import { patchSessionEntry } from "../config/sessions/session-accessor.js";
 import type { SessionEntry } from "../config/sessions/types.js";
 import { formatErrorMessage } from "./errors.js";
@@ -218,7 +218,7 @@ export async function finalizeHeartbeatOutcome(params: {
       ...(failureChannel !== "none" && failureTarget
         ? {
             deliver: async () => {
-              const send = await sendDurableMessageBatch({
+              const send = await sendDurableMessageBatchCore({
                 cfg,
                 channel: failureChannel,
                 to: failureTarget,
@@ -397,7 +397,7 @@ export async function finalizeHeartbeatOutcome(params: {
     }
   }
 
-  const send = await sendDurableMessageBatch({
+  const send = await sendDurableMessageBatchCore({
     cfg,
     channel: delivery.channel,
     to: delivery.to,

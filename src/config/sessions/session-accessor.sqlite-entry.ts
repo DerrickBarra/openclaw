@@ -409,7 +409,7 @@ export function readSessionUpdatedAt(scope: SessionAccessScope): number | undefi
 }
 
 /** Applies a partial entry update to the additive SQLite session store. */
-export async function upsertSessionEntry(
+export async function upsertSessionEntryCore(
   scope: SessionAccessScope,
   patch: Partial<SessionEntry>,
 ): Promise<SessionEntry | null> {

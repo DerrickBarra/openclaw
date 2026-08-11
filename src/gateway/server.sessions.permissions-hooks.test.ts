@@ -16,7 +16,7 @@ import {
 import {
   listSessionEntries,
   loadSessionEntry,
-  upsertSessionEntry,
+  upsertSessionEntryCore,
 } from "../config/sessions/session-accessor.js";
 import { isSessionPatchEvent } from "../hooks/internal-hooks.js";
 import { requireRecord } from "./test-helpers.assertions.js";
@@ -62,7 +62,7 @@ async function createPermissionCheckpointStore() {
     throw new Error("expected legacy checkpoint fixture");
   }
 
-  await upsertSessionEntry(
+  await upsertSessionEntryCore(
     { sessionKey: "agent:main:main", storePath },
     sessionStoreEntry(fixture.sessionId, {
       sessionFile: fixture.sessionFile,
@@ -92,7 +92,7 @@ async function createPermissionCheckpointStore() {
       ],
     }),
   );
-  await upsertSessionEntry(
+  await upsertSessionEntryCore(
     { sessionKey: "agent:main:discord:group:dev", storePath },
     sessionStoreEntry("sess-group"),
   );

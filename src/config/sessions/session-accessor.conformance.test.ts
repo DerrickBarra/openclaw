@@ -33,7 +33,7 @@ import {
   replaceSessionEntry,
   resolveSessionTranscriptRuntimeTarget,
   updateSessionEntry,
-  upsertSessionEntry,
+  upsertSessionEntryCore,
   type ExactSessionEntry,
   type SessionAccessScope,
   type SessionEntrySummary,
@@ -146,7 +146,7 @@ const publicAccessorAdapter: AccessorAdapter = {
   loadExactSessionEntry,
   listSessionEntries,
   readSessionUpdatedAt,
-  upsertSessionEntry,
+  upsertSessionEntry: upsertSessionEntryCore,
   replaceSessionEntry,
   patchSessionEntry,
   updateSessionEntry,
@@ -184,7 +184,7 @@ const sqliteAdapter: AccessorAdapter = {
   loadExactSessionEntry,
   listSessionEntries: listSessionEntryRows,
   readSessionUpdatedAt,
-  upsertSessionEntry,
+  upsertSessionEntry: upsertSessionEntryCore,
   replaceSessionEntry,
   patchSessionEntry,
   updateSessionEntry: patchSessionEntry,
@@ -593,7 +593,7 @@ describe.each([publicAccessorAdapter, sqliteAdapter])(
         storePath: legacyStorePath,
       };
 
-      await upsertSessionEntry(scope, {
+      await upsertSessionEntryCore(scope, {
         model: "gpt-5.5",
         sessionId: "session-1",
         updatedAt: 10,
@@ -632,7 +632,7 @@ describe.each([publicAccessorAdapter, sqliteAdapter])(
         storePath: customStorePath,
       };
 
-      await upsertSessionEntry(scope, {
+      await upsertSessionEntryCore(scope, {
         model: "gpt-5.5",
         sessionId: "session-1",
         updatedAt: 10,
@@ -661,7 +661,7 @@ describe.each([publicAccessorAdapter, sqliteAdapter])(
         storePath: customStorePath,
       };
 
-      await upsertSessionEntry(scope, {
+      await upsertSessionEntryCore(scope, {
         model: "gpt-5.5",
         sessionId: "support-session",
         updatedAt: 10,
@@ -687,7 +687,7 @@ describe.each([publicAccessorAdapter, sqliteAdapter])(
     it("parses only the selected SQLite entry across keyed loads", async () => {
       const scope = sqliteAdapter.entryScope(paths);
       for (let index = 0; index < 20; index += 1) {
-        await upsertSessionEntry(
+        await upsertSessionEntryCore(
           {
             ...scope,
             sessionKey: `agent:main:unrelated-${index}`,
@@ -699,7 +699,7 @@ describe.each([publicAccessorAdapter, sqliteAdapter])(
           },
         );
       }
-      await upsertSessionEntry(scope, {
+      await upsertSessionEntryCore(scope, {
         model: "target",
         sessionId: "target-session",
         updatedAt: 100,
@@ -747,7 +747,7 @@ describe.each([publicAccessorAdapter, sqliteAdapter])(
         updatedAt: Date.now() - 31 * 24 * 60 * 60 * 1000,
       });
 
-      await upsertSessionEntry(scope, {
+      await upsertSessionEntryCore(scope, {
         model: "fresh",
         sessionId: "fresh-session",
         updatedAt: Date.now(),
@@ -763,7 +763,7 @@ describe.each([publicAccessorAdapter, sqliteAdapter])(
     it("serializes concurrent SQLite entry patches", async () => {
       const scope = sqliteAdapter.entryScope(paths);
 
-      await upsertSessionEntry(scope, {
+      await upsertSessionEntryCore(scope, {
         model: "base",
         sessionId: "patch-session",
         updatedAt: 10,
@@ -1208,7 +1208,7 @@ describe("sqlite session normalization", () => {
 
   it("maintains normalized session node and window rows", async () => {
     const env = { ...process.env, OPENCLAW_STATE_DIR: paths.stateDir };
-    await upsertSessionEntry(
+    await upsertSessionEntryCore(
       {
         agentId: "main",
         env,
@@ -1333,7 +1333,7 @@ describe("sqlite session normalization", () => {
       storePath: paths.sqlitePath,
     };
 
-    await upsertSessionEntry(scope, {
+    await upsertSessionEntryCore(scope, {
       delivery: normalizeSessionDeliveryState({ context: { channel: "telegram" } }),
       chatType: "group",
       createdVia: "channel",
@@ -1354,7 +1354,7 @@ describe("sqlite session normalization", () => {
       },
     );
 
-    await upsertSessionEntry(scope, {
+    await upsertSessionEntryCore(scope, {
       delivery: normalizeSessionDeliveryState({ context: { channel: "telegram" } }),
       chatType: "group",
       displayName: "telegram:g-bucephalus-+-topics",
@@ -1400,7 +1400,7 @@ describe("sqlite session normalization", () => {
       storePath: paths.sqlitePath,
     };
 
-    await upsertSessionEntry(scope, {
+    await upsertSessionEntryCore(scope, {
       sessionId: "temporary-session",
       updatedAt: 10,
     });
@@ -1420,7 +1420,7 @@ describe("sqlite session normalization", () => {
     const env = { ...process.env, OPENCLAW_STATE_DIR: paths.stateDir };
     const parentKey = "agent:main:parent";
     const childKey = "agent:main:subagent:child";
-    await upsertSessionEntry(
+    await upsertSessionEntryCore(
       {
         agentId: "main",
         env,
@@ -1488,7 +1488,7 @@ describe("sqlite session normalization", () => {
       sessionKey: "agent:main:main",
       storePath: paths.sqlitePath,
     };
-    await upsertSessionEntry(scope, {
+    await upsertSessionEntryCore(scope, {
       sessionId: "current-session",
       updatedAt: 20,
     });
@@ -2039,7 +2039,7 @@ describe("sqlite session normalization", () => {
       window_updated_at: 123,
     });
 
-    await upsertSessionEntry(
+    await upsertSessionEntryCore(
       {
         agentId: "main",
         env,
@@ -2125,7 +2125,7 @@ describe("sqlite session normalization", () => {
       updatedAt: 10,
       compactionCheckpoints: [checkpoint],
     };
-    await upsertSessionEntry(sourceEntryScope, sourceEntry);
+    await upsertSessionEntryCore(sourceEntryScope, sourceEntry);
 
     const notify = vi.fn();
     const unsubscribe = onSessionIdentityMutation(notify);
@@ -2210,7 +2210,7 @@ describe("sqlite session normalization", () => {
       { type: "message", id: "post-msg", parentId: null, message: { content: "post" } },
       { type: "message", id: "skipped-msg", parentId: "post-msg", message: { content: "skip" } },
     ]);
-    await upsertSessionEntry(sourceEntryScope, {
+    await upsertSessionEntryCore(sourceEntryScope, {
       sessionId: "source-session",
       updatedAt: 10,
       compactionCheckpoints: [checkpoint],
@@ -2290,7 +2290,7 @@ describe("sqlite session normalization", () => {
       { type: "message", id: "post-msg-1", parentId: null, message: { content: "skip" } },
       { type: "message", id: "post-msg-2", parentId: "post-msg-1", message: { content: "skip" } },
     ]);
-    await upsertSessionEntry(sourceEntryScope, {
+    await upsertSessionEntryCore(sourceEntryScope, {
       label: "Current",
       sessionId: "current-session",
       updatedAt: 10,
