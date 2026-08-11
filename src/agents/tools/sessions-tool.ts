@@ -194,8 +194,8 @@ async function resolvePatchTarget(
 ): Promise<{
   agentId: string;
   cfg: OpenClawConfig;
+  isRequesterSession: boolean;
   key: string;
-  requesterKey: string;
 }> {
   const context = resolveSessionToolContext(opts);
   const rawKey = sessionKey ?? context.effectiveRequesterKey;
@@ -240,7 +240,9 @@ async function resolvePatchTarget(
     resolvedAgentId: resolved.agentId,
     requesterAgentId,
   });
-  if (resolved.key !== context.effectiveRequesterKey) {
+  const isRequesterSession =
+    resolved.key === context.effectiveRequesterKey && agentId === requesterAgentId;
+  if (!isRequesterSession) {
     // Session visibility is the configured read/write scope for session tools;
     // the action only selects error copy. Owner gating remains separate.
     const guard = await createSessionVisibilityGuard({
@@ -266,8 +268,8 @@ async function resolvePatchTarget(
   return {
     agentId,
     cfg: context.cfg,
+    isRequesterSession,
     key: resolved.key,
-    requesterKey: context.effectiveRequesterKey,
   };
 }
 
@@ -284,15 +286,11 @@ export function createSessionsTool(opts: SessionsToolOptions = {}): AnyAgentTool
       const action = readStringParam(params, "action", { required: true });
       if (action === "reset" || action === "delete") {
         const rawKey = readStringParam(params, "sessionKey", { required: true });
-        const { agentId, key } = await resolvePatchTarget(
+        const { agentId, isRequesterSession, key } = await resolvePatchTarget(
           { ...opts, config: opts.config ?? getRuntimeConfig() },
           rawKey,
         );
-        const context = resolveSessionToolContext({
-          ...opts,
-          config: opts.config ?? getRuntimeConfig(),
-        });
-        if (key === context.effectiveRequesterKey) {
+        if (isRequesterSession) {
           throw new ToolInputError(`Cannot ${action} the session running this tool`);
         }
         const agentScope = parseAgentSessionKey(key) ? {} : { agentId };
@@ -351,7 +349,7 @@ export function createSessionsTool(opts: SessionsToolOptions = {}): AnyAgentTool
         throw new ToolInputError(`Unknown action: ${action}`);
       }
 
-      const { agentId, cfg, key, requesterKey } = await resolvePatchTarget(
+      const { agentId, cfg, isRequesterSession, key } = await resolvePatchTarget(
         { ...opts, config: opts.config ?? getRuntimeConfig() },
         normalizeOptionalString(readStringParam(params, "sessionKey")),
       );
@@ -404,7 +402,7 @@ export function createSessionsTool(opts: SessionsToolOptions = {}): AnyAgentTool
       const includeResolved = patch.model !== undefined || patch.thinkingLevel !== undefined;
       const agentScope = parseAgentSessionKey(key) ? {} : { agentId };
 
-      if (patch.archived === true && key === requesterKey && key !== "global") {
+      if (patch.archived === true && isRequesterSession && key !== "global") {
         if (key !== resolveAgentMainSessionKey({ cfg, agentId })) {
           const storePath = resolveStorePath(cfg.session?.store, { agentId });
           const currentEntry = loadSessionEntry({ agentId, sessionKey: key, storePath });
