@@ -69,7 +69,7 @@
 {"contentHash":"e0523b4936d7c7ec043265de9e2a8f6289d32dacba0a28c3999ba3a0975dfc21","entrypoint":"error-runtime","importSpecifier":"openclaw/plugin-sdk/error-runtime"}
 {"contentHash":"5125d71bf8c4aeca728c4b8c73b2984247ba7bcc088a45ee29692ff64e3ebf90","entrypoint":"extension-shared","importSpecifier":"openclaw/plugin-sdk/extension-shared"}
 {"contentHash":"cbeb81159a1e558846f3cf9eecf3fd5a84858029cfdd9ccf237af428e35e755c","entrypoint":"gateway-method-runtime","importSpecifier":"openclaw/plugin-sdk/gateway-method-runtime"}
-{"contentHash":"5f9f63e5a38254185ffe07d96fa95a227a2d7485231fd0575168dbfeedc677cf","entrypoint":"gateway-runtime","importSpecifier":"openclaw/plugin-sdk/gateway-runtime"}
+{"contentHash":"8aad1f3358c2ba49003f9a182292ef642f75c9f53e22144fc713dcf26f9d7e41","entrypoint":"gateway-runtime","importSpecifier":"openclaw/plugin-sdk/gateway-runtime"}
 {"contentHash":"c6ff5b325384c258ae96e677568d58652fe66ebc6745669a2137970154ef4b92","entrypoint":"group-access","importSpecifier":"openclaw/plugin-sdk/group-access"}
 {"contentHash":"77489d30eaa98d93c702d335f1d0324b90f0013400875038239075dabba9febe","entrypoint":"health","importSpecifier":"openclaw/plugin-sdk/health"}
 {"contentHash":"273ebd4fcac3041e3a136410fa396b9704c73eedb66414723996127ed80db8f3","entrypoint":"hook-runtime","importSpecifier":"openclaw/plugin-sdk/hook-runtime"}
