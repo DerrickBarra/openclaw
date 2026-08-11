@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import { expectRequestCountStable } from "./chat-flow.test-support.ts";
 import {
-  activateMenuItem,
+  activateSelfRemovingControl,
   captureUiProof,
   controlUiSessionPath,
   controlUiSessionUrl,
@@ -180,7 +180,7 @@ suite.define(() => {
       const archiveItem = menuHost.getByRole("menuitem", { name: "Archive session" });
       expect(await archiveItem.isDisabled()).toBe(false);
       expect(await menuHost.getByRole("menuitem", { name: "Delete…" }).isDisabled()).toBe(true);
-      await activateMenuItem(archiveItem);
+      await activateSelfRemovingControl(archiveItem);
       const patch = await waitForPatch(
         gateway,
         (params) => params.key === "agent:main:research" && params.archived === true,
@@ -431,7 +431,7 @@ suite.define(() => {
       }
       await rowFor(batchRows[0]!.key).click({ button: "right" });
       const batchMenu = page.locator("openclaw-session-menu");
-      await activateMenuItem(
+      await activateSelfRemovingControl(
         batchMenu.getByRole("menuitem", { name: `Archive ${batchRows.length}` }),
       );
       await gateway.waitForRequest("sessions.patchMany");
@@ -451,7 +451,7 @@ suite.define(() => {
       });
       await selectedRow.hover();
       await selectedRow.getByRole("button", { name: "Open session menu" }).click();
-      await activateMenuItem(
+      await activateSelfRemovingControl(
         page.locator("openclaw-session-menu").getByRole("menuitem", {
           name: "Archive session",
         }),
@@ -514,7 +514,8 @@ suite.define(() => {
             ).archiveDocumentTitleHistory ?? [],
         ),
       ).not.toContain("New session — OpenClaw");
-      const archivedNotice = page.locator(".agent-chat__disabled-banner");
+      const activePane = page.locator('openclaw-chat-pane[aria-hidden="false"]');
+      const archivedNotice = activePane.locator(".agent-chat__disabled-banner");
       await archivedNotice.waitFor({ state: "visible", timeout: 10_000 });
       await expect.poll(() => archivedNotice.textContent()).toContain("This session is archived.");
       await expect
@@ -524,7 +525,7 @@ suite.define(() => {
       const archiveToast = page.locator("openclaw-toast-host .app-toast");
       await expect.poll(() => archiveToast.textContent()).toContain("Session archived");
       await archiveToast.getByRole("button", { name: "Dismiss" }).click();
-      await archivedNotice.getByRole("button", { name: "Unarchive" }).click();
+      await activateSelfRemovingControl(archivedNotice.getByRole("button", { name: "Unarchive" }));
       await waitForPatch(
         gateway,
         (params) => params.key === selected.key && params.archived === false,
@@ -584,7 +585,8 @@ suite.define(() => {
       await selectedRow.locator(".sidebar-session__archive-glyph").waitFor({ state: "visible" });
       await expect.poll(() => page.getByText("Archived planning", { exact: true }).count()).toBe(2);
 
-      const archivedNotice = page.locator(".agent-chat__disabled-banner");
+      const activePane = page.locator('openclaw-chat-pane[aria-hidden="false"]');
+      const archivedNotice = activePane.locator(".agent-chat__disabled-banner");
       await archivedNotice.waitFor({ state: "visible", timeout: 10_000 });
       await expect.poll(() => archivedNotice.textContent()).toContain("This session is archived.");
       await expect.poll(() => page.locator(".agent-chat__input").count()).toBe(0);
@@ -592,7 +594,7 @@ suite.define(() => {
       await gateway.setMethodResponse("sessions.describe", {
         session: { ...archived, archived: false },
       });
-      await archivedNotice.getByRole("button", { name: "Unarchive" }).click();
+      await activateSelfRemovingControl(archivedNotice.getByRole("button", { name: "Unarchive" }));
       await waitForPatch(
         gateway,
         (params) => params.key === archived.key && params.archived === false,
@@ -709,7 +711,7 @@ suite.define(() => {
       await row.waitFor({ state: "visible", timeout: 10_000 });
 
       await row.getByRole("button", { name: "Open session menu" }).click();
-      await activateMenuItem(
+      await activateSelfRemovingControl(
         page.locator("openclaw-session-menu").getByRole("menuitem", { name: "Delete…" }),
       );
       await confirmDelete(page);
