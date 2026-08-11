@@ -450,12 +450,12 @@ describe("agent request session ownership preflight", () => {
   function runBareSessionPreflight(owner?: string) {
     const respond = vi.fn();
     const result = prepareAgentRequestPreflight({
-      params: {
+      request: {
         message: "continue",
         sessionKey: "global",
         idempotencyKey: "bare-session-run",
       },
-      respond,
+      io: createAgentTurnIo(respond),
       context: {
         getRuntimeConfig: () => ({
           session: { store: "/tmp/shared.sqlite" },
@@ -467,6 +467,7 @@ describe("agent request session ownership preflight", () => {
         }),
         dedupe: new Map(),
       },
+      client: null,
     } as never);
     return { respond, result };
   }
