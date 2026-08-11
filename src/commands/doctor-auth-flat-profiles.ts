@@ -47,7 +47,7 @@ import { resolveStateDir } from "../config/paths.js";
 import type { AuthProfileConfig } from "../config/types.auth.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { coerceSecretRef } from "../config/types.secrets.js";
-import { loadJsonFile } from "../infra/json-file.js";
+import { loadJsonFileThroughSymlink } from "../infra/json-file.js";
 import { readLegacyMigrationReceipt } from "../infra/state-migrations.receipts.js";
 import type { OpenClawAgentDatabase } from "../state/openclaw-agent-db.js";
 import { shortenHomePath } from "../utils.js";
@@ -891,7 +891,7 @@ function migrateLockedLegacyOAuthFile(params: {
   if (archivePreviouslyMigratedAuthProfileSource(receipt, params.result)) {
     return;
   }
-  const raw = loadJsonFile(params.oauthPath);
+  const raw = loadJsonFileThroughSymlink(params.oauthPath);
   const parsed = coerceLegacyOAuthFile(raw);
   const imported = parsed.store;
   if (!imported) {
@@ -1421,7 +1421,7 @@ function resolveAwsSdkAuthProfileMarkerStore(
   if (!fs.existsSync(candidate.authPath)) {
     return null;
   }
-  const raw = loadJsonFile(candidate.authPath);
+  const raw = loadJsonFileThroughSymlink(candidate.authPath);
   if (!isRecord(raw) || !isRecord(raw.profiles)) {
     return null;
   }
@@ -1900,7 +1900,7 @@ export function collectOpenAICodexAuthProfileStoreIdMap(params: {
     if (!fs.existsSync(candidate.authPath)) {
       continue;
     }
-    const raw = loadJsonFile(candidate.authPath);
+    const raw = loadJsonFileThroughSymlink(candidate.authPath);
     if (!isRecord(raw) || !isRecord(raw.profiles)) {
       continue;
     }
