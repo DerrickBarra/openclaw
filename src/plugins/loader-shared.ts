@@ -305,9 +305,11 @@ export function createManifestPluginRecord(params: {
     enabled: params.enabled,
     compat: collectPluginManifestCompatCodes(manifestRecord),
     activationState: params.activationState,
+    activation: manifestRecord.activation,
     syntheticAuthRefs: manifestRecord.syntheticAuthRefs,
     channelIds: manifestRecord.channels,
     providerIds: manifestRecord.providers,
+    commandAliases: manifestRecord.commandAliases,
     configSchema: Boolean(manifestRecord.configSchema),
     contracts: manifestRecord.contracts,
   });
@@ -332,7 +334,13 @@ export function applyManifestSnapshotMetadata(
     ...(manifestRecord.cliBackends ?? []),
     ...(manifestRecord.setup?.cliBackends ?? []),
   ];
-  record.commands = (manifestRecord.commandAliases ?? []).map((alias) => alias.name);
+  const commandAliases = manifestRecord.commandAliases ?? [];
+  record.toolNames = [...(manifestRecord.contracts?.tools ?? [])];
+  record.cliCommands = commandAliases
+    .map((alias) => alias.cliCommand ?? alias.name)
+    .filter((command): command is string => Boolean(command));
+  record.commands = commandAliases.map((alias) => alias.name);
+  record.httpRoutes = manifestRecord.activation?.onRoutes?.length ?? 0;
 }
 
 export function maybeThrowOnPluginLoadError(

@@ -2,8 +2,9 @@
 import { normalizeLowercaseStringOrEmpty } from "@openclaw/normalization-core/string-coerce";
 import type { PluginCompatCode } from "./compat/registry.js";
 import type { PluginActivationState } from "./config-state.js";
+import type { PluginManifestCommandAlias } from "./manifest-command-aliases.js";
 import type { PluginBundleFormat, PluginDiagnosticCode, PluginFormat } from "./manifest-types.js";
-import type { PluginManifestContracts } from "./manifest.js";
+import type { PluginManifestActivation, PluginManifestContracts } from "./manifest.js";
 import { isPluginLifecycleTraceEnabled } from "./plugin-lifecycle-trace.js";
 import type { PluginRecord, PluginRegistry } from "./registry.js";
 import {
@@ -30,12 +31,20 @@ export function createPluginRecord(params: {
   enabled: boolean;
   compat?: readonly PluginCompatCode[];
   activationState?: PluginActivationState;
+  activation?: PluginManifestActivation;
   syntheticAuthRefs?: string[];
   channelIds?: readonly string[];
   providerIds?: readonly string[];
+  commandAliases?: readonly PluginManifestCommandAlias[];
   configSchema: boolean;
   contracts?: PluginManifestContracts;
 }): PluginRecord {
+  const commandAliases = params.commandAliases ?? [];
+  const commandAliasNames = commandAliases.map((alias) => alias.name);
+  const cliCommands = commandAliases
+    .map((alias) => alias.cliCommand ?? alias.name)
+    .filter((command): command is string => Boolean(command));
+  const staticHttpRouteCount = params.activation?.onRoutes?.length ?? 0;
   return {
     id: params.id,
     name: params.name ?? params.id,
@@ -59,7 +68,7 @@ export function createPluginRecord(params: {
     syntheticAuthRefs: params.syntheticAuthRefs ?? [],
     // Disabled records still enter the registry so status/doctor can explain why they are inactive.
     status: params.enabled ? "loaded" : "disabled",
-    toolNames: [],
+    toolNames: [...(params.contracts?.tools ?? [])],
     hookNames: [],
     channelIds: [...(params.channelIds ?? [])],
     cliBackendIds: [],
@@ -79,11 +88,11 @@ export function createPluginRecord(params: {
     contextEngineIds: [],
     memoryEmbeddingProviderIds: [...(params.contracts?.memoryEmbeddingProviders ?? [])],
     agentHarnessIds: [],
-    cliCommands: [],
+    cliCommands,
     services: [],
     gatewayDiscoveryServiceIds: [],
-    commands: [],
-    httpRoutes: 0,
+    commands: commandAliasNames,
+    httpRoutes: staticHttpRouteCount,
     hookCount: 0,
     configSchema: params.configSchema,
     configUiHints: undefined,
