@@ -171,6 +171,7 @@ export function createTerminalTool(opts: TerminalToolOptions = {}): AnyAgentTool
       if (!agentSessionKey) {
         throw new ToolInputError("agent session required");
       }
+      const agentId = opts.agentId?.trim() || resolveAgentIdFromSessionKey(agentSessionKey);
       const context = getContext();
       const manager = context?.terminalSessions;
       if (!context || !manager) {
@@ -178,7 +179,7 @@ export function createTerminalTool(opts: TerminalToolOptions = {}): AnyAgentTool
       }
 
       if (action === "list") {
-        return jsonResult({ sessions: manager.listAgent(agentSessionKey, opts.agentId) });
+        return jsonResult({ sessions: manager.listAgent(agentSessionKey, agentId) });
       }
 
       if (action === "open") {
@@ -190,7 +191,6 @@ export function createTerminalTool(opts: TerminalToolOptions = {}): AnyAgentTool
         if (!context.isTerminalEnabled()) {
           throw new ToolInputError("terminal disabled");
         }
-        const agentId = opts.agentId?.trim() || resolveAgentIdFromSessionKey(agentSessionKey);
         const launch = context.resolveTerminalLaunchPolicy(agentId);
         if (!launch.ok) {
           throw new ToolInputError(launchBlockMessage(launch.block));
@@ -292,7 +292,7 @@ export function createTerminalTool(opts: TerminalToolOptions = {}): AnyAgentTool
 
       const sessionId = requireSessionId(params);
       if (action === "read") {
-        const raw = manager.snapshotAgent(agentSessionKey, sessionId, opts.agentId);
+        const raw = manager.snapshotAgent(agentSessionKey, sessionId, agentId);
         if (raw === undefined) {
           throw new ToolInputError("terminal not owned by this agent session");
         }
@@ -305,7 +305,7 @@ export function createTerminalTool(opts: TerminalToolOptions = {}): AnyAgentTool
           allowEmpty: true,
         });
         return jsonResult({
-          ok: manager.writeAgent(agentSessionKey, sessionId, data, opts.agentId),
+          ok: manager.writeAgent(agentSessionKey, sessionId, data, agentId),
         });
       }
       if (action === "resize") {
@@ -315,12 +315,12 @@ export function createTerminalTool(opts: TerminalToolOptions = {}): AnyAgentTool
             sessionId,
             readDimension(params, "cols"),
             readDimension(params, "rows"),
-            opts.agentId,
+            agentId,
           ),
         });
       }
       if (action === "close") {
-        return jsonResult({ ok: manager.closeAgent(agentSessionKey, sessionId, opts.agentId) });
+        return jsonResult({ ok: manager.closeAgent(agentSessionKey, sessionId, agentId) });
       }
       throw new ToolInputError(`Unknown action: ${action}`);
     },
