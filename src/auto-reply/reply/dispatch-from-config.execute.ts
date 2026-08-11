@@ -80,6 +80,7 @@ export async function executeDispatch(state: PrepareDispatchExecutionReadyState)
     params.configOverride ? undefined : state.preparedReplyDispatchRuntime,
     state.replyResolver,
   );
+  let agentRunTerminalOutcome: "completed" | "failed" | undefined;
   let deliberateSilentTerminalReply = false;
   let pendingContinuation = false;
   let didDeliverVisiblePartialReply = false;
@@ -130,6 +131,10 @@ export async function executeDispatch(state: PrepareDispatchExecutionReadyState)
                   onSessionPrepared: state.notePreparedSession,
                 } satisfies InternalReplyResolverOptions),
                 onObservedReplyDelivery: state.markObservedReplyDelivery,
+                onAgentRunStart: (runId) => {
+                  agentRunTerminalOutcome = "completed";
+                  state.getReplyOptions()?.onAgentRunStart?.(runId);
+                },
                 suppressToolErrorWarnings: state.suppressToolErrorWarnings,
                 shouldSuppressToolErrorWarnings: state.shouldSuppressToolErrorWarnings,
                 typingPolicy: typing.typingPolicy,
@@ -622,6 +627,9 @@ export async function executeDispatch(state: PrepareDispatchExecutionReadyState)
     ) {
       throw error;
     }
+    if (agentRunTerminalOutcome === "completed") {
+      agentRunTerminalOutcome = "failed";
+    }
     failDispatchReplyOperation(error);
     return buildTerminalAgentRunFailureReplyPayload({
       visibleReplyDelivered: true,
@@ -720,6 +728,7 @@ export async function executeDispatch(state: PrepareDispatchExecutionReadyState)
     }
   }
   const nextState = extendPreparedDispatchState(state, {
+    ...(agentRunTerminalOutcome ? { agentRunTerminalOutcome } : {}),
     deliberateSilentTerminalReply,
     pendingContinuation,
     replyResult,

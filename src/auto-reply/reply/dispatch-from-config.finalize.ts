@@ -363,6 +363,9 @@ export async function finalizeDispatchAndAudit(state: ExecuteDispatchReadyState)
     result: state.attachSourceReplyDeliveryMode({
       queuedFinal,
       counts,
+      ...(state.agentRunTerminalOutcome
+        ? { agentRunTerminalOutcome: state.agentRunTerminalOutcome }
+        : {}),
       ...(state.routeState.sessionMetadataChangesForResult
         ? { sessionMetadataChanges: state.routeState.sessionMetadataChangesForResult }
         : {}),
