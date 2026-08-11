@@ -94,6 +94,27 @@ describe("plugin loader records", () => {
     expect(record.memoryEmbeddingProviderIds).toEqual(["kitchen-sink-memory-provider"]);
   });
 
+  it("preserves static manifest command and route capabilities before runtime registration", () => {
+    const record = createPluginRecord({
+      id: "kitchen-sink",
+      name: "Kitchen Sink",
+      source: "/tmp/kitchen-sink/index.js",
+      origin: "global",
+      enabled: true,
+      contracts: {
+        tools: ["kitchen_execute", "kitchen_execute", "kitchen_search"],
+      },
+      commandAliases: [{ name: "kitchen-sink" }, { name: "kitchen-cli", cliCommand: "kitchen" }],
+      activation: { onRoutes: ["kitchen-webhook"] },
+      configSchema: false,
+    });
+
+    expect(record.toolNames).toEqual(["kitchen_execute", "kitchen_search"]);
+    expect(record.commands).toEqual(["kitchen-sink", "kitchen-cli"]);
+    expect(record.cliCommands).toEqual(["kitchen-sink", "kitchen"]);
+    expect(record.httpRoutes).toBe(1);
+  });
+
   it.each([
     { diagnostics: "", expected: "Error: boom" },
     { diagnostics: "1", expected: "Error: boom\n    at plugin-entry.ts:1:1" },

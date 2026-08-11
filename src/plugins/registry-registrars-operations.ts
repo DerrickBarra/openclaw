@@ -141,7 +141,8 @@ export function createOperationRegistrars(state: PluginRegistryState) {
       });
       return;
     }
-    record.cliCommands.push(...commandPaths);
+    const existingCliCommands = new Set(record.cliCommands);
+    record.cliCommands.push(...commandPaths.filter((command) => !existingCliCommands.has(command)));
     registry.cliRegistrars.push({
       pluginId: record.id,
       pluginName: record.name,

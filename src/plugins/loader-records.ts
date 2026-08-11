@@ -1,8 +1,15 @@
 /** Converts loaded plugin registries into stable plugin records for status and diagnostics. */
 import { normalizeLowercaseStringOrEmpty } from "@openclaw/normalization-core/string-coerce";
+import { uniqueStrings } from "@openclaw/normalization-core/string-normalization";
 import type { PluginCompatCode } from "./compat/registry.js";
 import type { PluginActivationState } from "./config-state.js";
-import type { PluginBundleFormat, PluginDiagnosticCode, PluginFormat } from "./manifest-types.js";
+import type { PluginManifestCommandAlias } from "./manifest-command-aliases.js";
+import type {
+  PluginBundleFormat,
+  PluginDiagnosticCode,
+  PluginFormat,
+  PluginManifestActivation,
+} from "./manifest-types.js";
 import type {
   PluginManifestContracts,
   PluginManifestDashboard,
@@ -36,14 +43,17 @@ export function createPluginRecord(params: {
   enabled: boolean;
   compat?: readonly PluginCompatCode[];
   activationState?: PluginActivationState;
+  activation?: PluginManifestActivation;
   syntheticAuthRefs?: string[];
   channelIds?: readonly string[];
   providerIds?: readonly string[];
+  commandAliases?: readonly PluginManifestCommandAlias[];
   configSchema: boolean;
   contracts?: PluginManifestContracts;
   dashboard?: PluginManifestDashboard;
   mcpServers?: Record<string, PluginManifestMcpServer>;
 }): PluginRecord {
+  const commandAliases = params.commandAliases ?? [];
   return {
     id: params.id,
     name: params.name ?? params.id,
@@ -69,7 +79,7 @@ export function createPluginRecord(params: {
     syntheticAuthRefs: params.syntheticAuthRefs ?? [],
     // Disabled records still enter the registry so status/doctor can explain why they are inactive.
     status: params.enabled ? "loaded" : "disabled",
-    toolNames: [],
+    toolNames: uniqueStrings(params.contracts?.tools ?? []),
     hookNames: [],
     channelIds: [...(params.channelIds ?? [])],
     cliBackendIds: [],
@@ -89,11 +99,11 @@ export function createPluginRecord(params: {
     contextEngineIds: [],
     memoryEmbeddingProviderIds: [...(params.contracts?.memoryEmbeddingProviders ?? [])],
     agentHarnessIds: [],
-    cliCommands: [],
+    cliCommands: uniqueStrings(commandAliases.map((alias) => alias.cliCommand ?? alias.name)),
     services: [],
     gatewayDiscoveryServiceIds: [],
-    commands: [],
-    httpRoutes: 0,
+    commands: uniqueStrings(commandAliases.map((alias) => alias.name)),
+    httpRoutes: params.activation?.onRoutes?.length ?? 0,
     hookCount: 0,
     configSchema: params.configSchema,
     configUiHints: undefined,

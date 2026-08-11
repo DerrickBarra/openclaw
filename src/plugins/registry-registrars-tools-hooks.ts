@@ -288,7 +288,8 @@ export function createToolHookRegistrars(state: PluginRegistryState) {
       return;
     }
     if (normalized.length > 0) {
-      record.toolNames.push(...normalized);
+      const existingToolNames = new Set(record.toolNames);
+      record.toolNames.push(...normalized.filter((name) => !existingToolNames.has(name)));
     }
     registry.tools.push({
       pluginId: record.id,

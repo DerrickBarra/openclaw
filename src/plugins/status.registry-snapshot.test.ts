@@ -172,7 +172,10 @@ describe("buildPluginRegistrySnapshotReport", () => {
           tools: ["indexed_echo", "indexed_search", "indexed_echo"],
           trustedToolPolicies: ["workflow-budget"],
         },
-        commandAliases: [{ name: "indexed-demo" }],
+        commandAliases: [{ name: "indexed-demo" }, { name: "indexed-cli", cliCommand: "indexed" }],
+        activation: {
+          onRoutes: ["indexed-http"],
+        },
         configSchema: {
           type: "object",
           additionalProperties: false,
@@ -200,6 +203,8 @@ describe("buildPluginRegistrySnapshotReport", () => {
       realtimeTranscriptionProviderIds: ["indexed-transcription-provider"],
       realtimeVoiceProviderIds: ["indexed-voice-provider"],
       toolNames: ["indexed_echo", "indexed_search"],
+      cliCommands: ["indexed-demo", "indexed"],
+      httpRoutes: 1,
       configSchema: true,
       contracts: {
         agentToolResultMiddleware: ["openclaw", "codex"],
@@ -209,7 +214,7 @@ describe("buildPluginRegistrySnapshotReport", () => {
         tools: ["indexed_echo", "indexed_search", "indexed_echo"],
         trustedToolPolicies: ["workflow-budget"],
       },
-      commands: ["indexed-demo"],
+      commands: ["indexed-demo", "indexed-cli"],
       source: fs.realpathSync(fixture.runtimeSource),
       status: "loaded",
     });
@@ -624,6 +629,13 @@ describe("buildPluginRegistrySnapshotReport", () => {
         name: "Snapshot Demo",
         description: "Status metadata",
         providers: ["snapshot-provider"],
+        contracts: {
+          tools: ["snapshot_execute", "snapshot_sessions"],
+        },
+        commandAliases: [{ name: "snapshot-cli" }],
+        activation: {
+          onRoutes: ["snapshot-http"],
+        },
       },
       providerId: "snapshot-provider",
       runtimeMessage: "runtime entry should not load for plugin status snapshot report",
@@ -642,6 +654,10 @@ describe("buildPluginRegistrySnapshotReport", () => {
       name: "Snapshot Demo",
       source: fs.realpathSync(fixture.runtimeSource),
       status: "loaded",
+      toolNames: ["snapshot_execute", "snapshot_sessions"],
+      cliCommands: ["snapshot-cli"],
+      commands: ["snapshot-cli"],
+      httpRoutes: 1,
       imported: false,
     });
     expect(isColdPluginRuntimeLoaded(fixture)).toBe(false);

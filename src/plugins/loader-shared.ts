@@ -3,6 +3,7 @@ import {
   normalizeLowercaseStringOrEmpty,
   normalizeOptionalString,
 } from "@openclaw/normalization-core/string-coerce";
+import { uniqueStrings } from "@openclaw/normalization-core/string-normalization";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { activateContextEngineRegistrations } from "../context-engine/registry.js";
 import { resolveRealpathOrAbsolute } from "../infra/boundary-path.js";
@@ -302,9 +303,11 @@ export function createManifestPluginRecord(params: {
     enabled: params.enabled,
     compat: collectPluginManifestCompatCodes(manifestRecord),
     activationState: params.activationState,
+    activation: manifestRecord.activation,
     syntheticAuthRefs: manifestRecord.syntheticAuthRefs,
     channelIds: manifestRecord.channels,
     providerIds: manifestRecord.providers,
+    commandAliases: manifestRecord.commandAliases,
     configSchema: Boolean(manifestRecord.configSchema),
     contracts: manifestRecord.contracts,
     dashboard: manifestRecord.dashboard,
@@ -331,7 +334,11 @@ export function applyManifestSnapshotMetadata(
     ...(manifestRecord.cliBackends ?? []),
     ...(manifestRecord.setup?.cliBackends ?? []),
   ];
-  record.commands = (manifestRecord.commandAliases ?? []).map((alias) => alias.name);
+  const commandAliases = manifestRecord.commandAliases ?? [];
+  record.toolNames = uniqueStrings(manifestRecord.contracts?.tools ?? []);
+  record.cliCommands = uniqueStrings(commandAliases.map((alias) => alias.cliCommand ?? alias.name));
+  record.commands = uniqueStrings(commandAliases.map((alias) => alias.name));
+  record.httpRoutes = manifestRecord.activation?.onRoutes?.length ?? 0;
 }
 
 export function maybeThrowOnPluginLoadError(

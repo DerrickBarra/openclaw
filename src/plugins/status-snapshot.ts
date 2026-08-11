@@ -78,6 +78,7 @@ function buildPluginRecordFromInstalledIndex(
 ): PluginRecord {
   const format = plugin.format ?? manifest?.format ?? "openclaw";
   const bundleFormat = plugin.bundleFormat ?? manifest?.bundleFormat;
+  const commandAliases = manifest?.commandAliases ?? [];
   return {
     id: plugin.pluginId,
     name: manifest?.name ?? plugin.packageName ?? plugin.pluginId,
@@ -116,11 +117,11 @@ function buildPluginRecordFromInstalledIndex(
     migrationProviderIds: [...(manifest?.contracts?.migrationProviders ?? [])],
     memoryEmbeddingProviderIds: [...(manifest?.contracts?.memoryEmbeddingProviders ?? [])],
     agentHarnessIds: [],
-    cliCommands: [],
+    cliCommands: uniqueStrings(commandAliases.map((alias) => alias.cliCommand ?? alias.name)),
     services: [],
     gatewayDiscoveryServiceIds: [],
-    commands: [...(manifest?.commandAliases?.map((alias) => alias.name) ?? [])],
-    httpRoutes: 0,
+    commands: uniqueStrings(commandAliases.map((alias) => alias.name)),
+    httpRoutes: manifest?.activation?.onRoutes?.length ?? 0,
     hookCount: 0,
     configSchema: Boolean(manifest?.configSchema),
     contracts: manifest?.contracts,
