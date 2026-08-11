@@ -871,6 +871,10 @@ vi.mock("openclaw/plugin-sdk/security-runtime", () => ({
 }));
 
 vi.mock("openclaw/plugin-sdk/string-coerce-runtime", () => ({
+  asOptionalRecord: (value: unknown) =>
+    typeof value === "object" && value !== null && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : undefined,
   isRecord: (value: unknown): value is Record<string, unknown> =>
     typeof value === "object" && value !== null && !Array.isArray(value),
   normalizeOptionalLowercaseString: (value?: string) => value?.toLowerCase(),
