@@ -177,11 +177,6 @@ function prepareProviderStreamModel<TApi extends Api>(params: {
   cfg?: unknown;
   apiRegistry: ApiRegistry;
 }): Model | undefined {
-  // Google simple completions have managed transport and sanitizer paths below.
-  // A plugin-native stream here would bypass both and emit unsupported payloads.
-  if (params.model.api === "google-generative-ai") {
-    return undefined;
-  }
   const pluginModel = resolveModelHeaderSentinels(params.model);
   const providerStreamFn = getAiTransportHost().plugin.resolveProviderStream({
     provider: params.model.provider,
@@ -240,14 +235,6 @@ export function prepareModelForSimpleCompletion<TApi extends Api>(params: {
     if (streamFn && registerCustomApi(apiRegistry, transportAwareModel.api, streamFn)) {
       return applyProviderSimpleCompletionWrapper(apiRegistry, transportAwareModel, cfg);
     }
-  }
-
-  if (model.api === "google-generative-ai") {
-    return applyProviderSimpleCompletionWrapper(
-      apiRegistry,
-      getAiTransportHost().prepareGoogleSimpleCompletionModel(apiRegistry, model),
-      cfg,
-    );
   }
 
   if (model.provider === "anthropic-vertex") {
