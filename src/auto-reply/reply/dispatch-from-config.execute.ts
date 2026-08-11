@@ -41,7 +41,7 @@ export async function executeDispatch(state: PrepareDispatchExecutionReadyState)
     deliveryChannel,
     deferFinalTtsText,
     dispatcher,
-    failDispatchReplyOperation,
+    failStartedAgentRun,
     flushPendingCommentaryProgress,
     getDispatchAbortOperation,
     getDispatchAbortSignal,
@@ -74,13 +74,11 @@ export async function executeDispatch(state: PrepareDispatchExecutionReadyState)
     waitForPendingDirectBlockReplyDelivery,
     wrapProgressCallback,
   } = state;
-  // Bind at the invocation boundary so every public three-argument resolver consumes the same
-  // request-scoped generation without widening its Plugin SDK contract.
+  // Bind request-scoped generation without widening the public resolver contract.
   const replyResolver = bindPreparedReplyDispatchRuntime(
     params.configOverride ? undefined : state.preparedReplyDispatchRuntime,
     state.replyResolver,
   );
-  let agentRunTerminalOutcome: "completed" | "failed" | undefined;
   let deliberateSilentTerminalReply = false;
   let pendingContinuation = false;
   let didDeliverVisiblePartialReply = false;
@@ -131,10 +129,6 @@ export async function executeDispatch(state: PrepareDispatchExecutionReadyState)
                   onSessionPrepared: state.notePreparedSession,
                 } satisfies InternalReplyResolverOptions),
                 onObservedReplyDelivery: state.markObservedReplyDelivery,
-                onAgentRunStart: (runId) => {
-                  agentRunTerminalOutcome = "completed";
-                  state.getReplyOptions()?.onAgentRunStart?.(runId);
-                },
                 suppressToolErrorWarnings: state.suppressToolErrorWarnings,
                 shouldSuppressToolErrorWarnings: state.shouldSuppressToolErrorWarnings,
                 typingPolicy: typing.typingPolicy,
@@ -214,10 +208,8 @@ export async function executeDispatch(state: PrepareDispatchExecutionReadyState)
                     markInboundDedupeReplayUnsafe();
                     // Buffered commentary preceded this tool; land it before the summary.
                     await flushPendingCommentaryProgress();
-                    // When the operator opts into messages.suppressToolErrors, never
-                    // surface tool-error tool-result payloads as channel progress,
-                    // regardless of source delivery mode. payloads.ts already drops
-                    // the warning text; this drops the visible progress delivery too.
+                    // messages.suppressToolErrors hides tool-error progress in every source mode;
+                    // payloads.ts drops the warning text, and this drops visible progress delivery.
                     if (
                       payload.isError === true &&
                       replyConfig.messages?.suppressToolErrors === true
@@ -627,10 +619,7 @@ export async function executeDispatch(state: PrepareDispatchExecutionReadyState)
     ) {
       throw error;
     }
-    if (agentRunTerminalOutcome === "completed") {
-      agentRunTerminalOutcome = "failed";
-    }
-    failDispatchReplyOperation(error);
+    failStartedAgentRun(error);
     return buildTerminalAgentRunFailureReplyPayload({
       visibleReplyDelivered: true,
       sessionCtx: ctx,
@@ -728,7 +717,6 @@ export async function executeDispatch(state: PrepareDispatchExecutionReadyState)
     }
   }
   const nextState = extendPreparedDispatchState(state, {
-    ...(agentRunTerminalOutcome ? { agentRunTerminalOutcome } : {}),
     deliberateSilentTerminalReply,
     pendingContinuation,
     replyResult,

@@ -344,6 +344,7 @@ export async function finalizeDispatchAndAudit(state: ExecuteDispatchReadyState)
     }
   }
   counts.final += routedFinalCount;
+  const agentRunTerminalOutcome = state.getAgentRunTerminalOutcome();
   state.commitInboundDedupeIfClaimed();
   const dispatchOutcome = queueCapRejected ? "skipped" : "completed";
   const dispatchReason = queueCapRejected
@@ -363,9 +364,7 @@ export async function finalizeDispatchAndAudit(state: ExecuteDispatchReadyState)
     result: state.attachSourceReplyDeliveryMode({
       queuedFinal,
       counts,
-      ...(state.agentRunTerminalOutcome
-        ? { agentRunTerminalOutcome: state.agentRunTerminalOutcome }
-        : {}),
+      ...(agentRunTerminalOutcome ? { agentRunTerminalOutcome } : {}),
       ...(state.routeState.sessionMetadataChangesForResult
         ? { sessionMetadataChanges: state.routeState.sessionMetadataChangesForResult }
         : {}),
