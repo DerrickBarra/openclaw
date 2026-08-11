@@ -54,6 +54,7 @@ import type { PluginMetadataSnapshot } from "../../plugins/plugin-metadata-snaps
 import { resolveManifestProviderAuthChoices } from "../../plugins/provider-auth-choices.js";
 import { normalizeAgentId } from "../../routing/session-key.js";
 import type { GatewayAgentRuntime } from "../../shared/session-types.js";
+import { resolveGatewayModelThinkingProfile } from "../session-utils-model.js";
 import { createModelsListAuthResolver } from "./models-list-auth-resolver.js";
 import type { GatewayRequestContext } from "./types.js";
 
@@ -65,6 +66,8 @@ type ModelsListEntry = Pick<
 type ModelsListEntryWithCapabilities = ModelsListEntry & {
   agentRuntime?: GatewayAgentRuntime;
   apiKeySupported?: boolean;
+  thinkingLevels?: Array<{ id: string; label: string }>;
+  thinkingDefault?: string;
 };
 type ApiKeyProviderCapabilities = {
   providers: ReadonlyMap<string, boolean>;
@@ -424,9 +427,25 @@ async function buildPublicModelsListEntries(params: {
         agentId: params.agentId,
         entry,
       });
+      const thinkingProfile =
+        typeof entry.reasoning === "boolean"
+          ? resolveGatewayModelThinkingProfile({
+              cfg: params.cfg,
+              agentId: params.agentId,
+              provider: entry.provider,
+              model: entry.id,
+              modelCatalog: params.catalog,
+            })
+          : undefined;
       return {
         ...publicEntry,
         ...(agentRuntime ? { agentRuntime } : {}),
+        ...(thinkingProfile
+          ? {
+              thinkingLevels: thinkingProfile.levels,
+              thinkingDefault: thinkingProfile.defaultLevel,
+            }
+          : {}),
         ...(capabilityProvider && params.apiKeyCapabilities?.providers.has(capabilityProvider)
           ? {
               apiKeySupported: params.apiKeyCapabilities.providers.get(capabilityProvider) === true,
