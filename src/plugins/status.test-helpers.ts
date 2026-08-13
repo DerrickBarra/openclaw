@@ -83,6 +83,11 @@ export function createPluginRecord(
     memoryEmbeddingProviderIds: [],
     agentHarnessIds: [],
     cliCommands: [],
+    staticInventory: {
+      commandAliases: [],
+      cliCommandHints: [],
+      routeActivationHints: [],
+    },
     services: [],
     gatewayDiscoveryServiceIds: [],
     commands: [],

@@ -1,6 +1,7 @@
 /** Verifies plugin loader records expose stable metadata for registered plugin surfaces. */
 import { describe, expect, it } from "vitest";
 import { createPluginRecord } from "./loader-records.js";
+import { buildPluginStaticInventory } from "./loader-records.js";
 
 describe("plugin loader records", () => {
   it("preserves manifest-declared channel ids before runtime registration", () => {
@@ -69,5 +70,37 @@ describe("plugin loader records", () => {
     expect(record.webSearchProviderIds).toEqual(["kitchen-sink-web-search-provider"]);
     expect(record.migrationProviderIds).toEqual(["kitchen-sink-migration-provider"]);
     expect(record.memoryEmbeddingProviderIds).toEqual(["kitchen-sink-memory-provider"]);
+  });
+
+  it("projects manifest-declared static inventory separately from runtime registrations", () => {
+    const staticInventory = buildPluginStaticInventory({
+      commandAliases: [
+        { name: "demo" },
+        { name: "chat-demo", kind: "runtime-slash" },
+        { name: "memory-demo", kind: "runtime-slash", cliCommand: "memory" },
+        { name: "setup-demo", cliCommand: "plugins setup demo" },
+      ],
+      activation: {
+        onRoutes: ["webhook"],
+      },
+    });
+    const record = createPluginRecord({
+      id: "kitchen-sink",
+      name: "Kitchen Sink",
+      source: "/tmp/kitchen-sink/index.js",
+      origin: "global",
+      enabled: true,
+      configSchema: false,
+      staticInventory,
+    });
+
+    expect(record.commands).toEqual([]);
+    expect(record.cliCommands).toEqual([]);
+    expect(record.httpRoutes).toBe(0);
+    expect(record.staticInventory).toEqual({
+      commandAliases: ["demo", "chat-demo", "memory-demo", "setup-demo"],
+      cliCommandHints: ["demo", "memory", "plugins setup demo"],
+      routeActivationHints: ["webhook"],
+    });
   });
 });

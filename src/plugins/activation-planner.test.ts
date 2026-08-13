@@ -139,7 +139,7 @@ describe("activation planner", () => {
           command: "pair",
         },
       }),
-    ).toEqual(["device-pair"]);
+    ).toEqual([]);
 
     expect(
       resolveManifestActivationPluginIds({

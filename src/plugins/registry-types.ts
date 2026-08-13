@@ -418,6 +418,7 @@ export type PluginRecord = {
   memoryEmbeddingProviderIds: string[];
   agentHarnessIds: string[];
   cliCommands: string[];
+  staticInventory?: PluginStaticInventory;
   services: string[];
   gatewayDiscoveryServiceIds: string[];
   commands: string[];
@@ -429,6 +430,12 @@ export type PluginRecord = {
   contracts?: PluginManifestContracts;
   memorySlotSelected?: boolean;
   dependencyStatus?: PluginDependencyStatus;
+};
+
+export type PluginStaticInventory = {
+  commandAliases: string[];
+  cliCommandHints: string[];
+  routeActivationHints: string[];
 };
 
 export type PluginRegistry = {

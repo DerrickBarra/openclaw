@@ -91,6 +91,7 @@ import {
   warnWhenAllowlistIsOpen,
 } from "./loader-provenance.js";
 import {
+  buildPluginStaticInventory,
   createPluginRecord,
   formatAutoEnabledActivationReason,
   formatMissingPluginRegisterError,
@@ -1345,6 +1346,7 @@ function applyManifestSnapshotMetadata(
     ...(manifestRecord.setup?.cliBackends ?? []),
   ];
   record.commands = (manifestRecord.commandAliases ?? []).map((alias) => alias.name);
+  record.staticInventory = buildPluginStaticInventory(manifestRecord);
 }
 
 function resolvePluginLoadCacheContext(options: PluginLoadOptions = {}) {
@@ -2149,6 +2151,7 @@ export function loadOpenClawPlugins(options: PluginLoadOptions = {}): PluginRegi
           providerIds: manifestRecord.providers,
           configSchema: Boolean(manifestRecord.configSchema),
           contracts: manifestRecord.contracts,
+          staticInventory: buildPluginStaticInventory(manifestRecord),
         });
         record.status = "disabled";
         record.error = `overridden by ${existingOrigin} plugin`;
@@ -2190,6 +2193,7 @@ export function loadOpenClawPlugins(options: PluginLoadOptions = {}): PluginRegi
         providerIds: manifestRecord.providers,
         configSchema: Boolean(manifestRecord.configSchema),
         contracts: manifestRecord.contracts,
+        staticInventory: buildPluginStaticInventory(manifestRecord),
       });
       record.kind = manifestRecord.kind;
       record.configUiHints = manifestRecord.configUiHints;
@@ -3132,6 +3136,7 @@ export async function loadOpenClawPluginCliRegistry(
         providerIds: manifestRecord.providers,
         configSchema: Boolean(manifestRecord.configSchema),
         contracts: manifestRecord.contracts,
+        staticInventory: buildPluginStaticInventory(manifestRecord),
       });
       record.status = "disabled";
       record.error = `overridden by ${existingOrigin} plugin`;
@@ -3173,6 +3178,7 @@ export async function loadOpenClawPluginCliRegistry(
       providerIds: manifestRecord.providers,
       configSchema: Boolean(manifestRecord.configSchema),
       contracts: manifestRecord.contracts,
+      staticInventory: buildPluginStaticInventory(manifestRecord),
     });
     record.kind = manifestRecord.kind;
     record.configUiHints = manifestRecord.configUiHints;

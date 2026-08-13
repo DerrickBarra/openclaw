@@ -2,10 +2,37 @@
 import { normalizeLowercaseStringOrEmpty } from "@openclaw/normalization-core/string-coerce";
 import type { PluginCompatCode } from "./compat/registry.js";
 import type { PluginActivationState } from "./config-state.js";
+import type { PluginManifestRecord } from "./manifest-registry.js";
 import type { PluginBundleFormat, PluginDiagnosticCode, PluginFormat } from "./manifest-types.js";
 import type { PluginManifestContracts } from "./manifest.js";
-import type { PluginRecord, PluginRegistry } from "./registry.js";
+import type { PluginRecord, PluginRegistry, PluginStaticInventory } from "./registry.js";
 import type { PluginLogger } from "./types.js";
+
+export function buildPluginStaticInventory(
+  manifestRecord: Pick<PluginManifestRecord, "activation" | "commandAliases"> | undefined,
+): PluginStaticInventory {
+  return {
+    commandAliases: [...(manifestRecord?.commandAliases?.map((alias) => alias.name) ?? [])],
+    cliCommandHints: [
+      ...(manifestRecord?.commandAliases
+        ?.map(
+          (alias) => alias.cliCommand ?? (alias.kind === "runtime-slash" ? undefined : alias.name),
+        )
+        .filter((hint): hint is string => typeof hint === "string" && hint.length > 0) ?? []),
+    ],
+    routeActivationHints: [...(manifestRecord?.activation?.onRoutes ?? [])],
+  };
+}
+
+export function normalizePluginStaticInventory(
+  staticInventory: PluginStaticInventory | undefined,
+): PluginStaticInventory {
+  return {
+    commandAliases: [...(staticInventory?.commandAliases ?? [])],
+    cliCommandHints: [...(staticInventory?.cliCommandHints ?? [])],
+    routeActivationHints: [...(staticInventory?.routeActivationHints ?? [])],
+  };
+}
 
 /** Builds the registry record shape shared by plugin loading, status, and diagnostics. */
 export function createPluginRecord(params: {
@@ -30,6 +57,7 @@ export function createPluginRecord(params: {
   providerIds?: readonly string[];
   configSchema: boolean;
   contracts?: PluginManifestContracts;
+  staticInventory?: PluginStaticInventory;
 }): PluginRecord {
   return {
     id: params.id,
@@ -75,6 +103,7 @@ export function createPluginRecord(params: {
     memoryEmbeddingProviderIds: [...(params.contracts?.memoryEmbeddingProviders ?? [])],
     agentHarnessIds: [],
     cliCommands: [],
+    staticInventory: normalizePluginStaticInventory(params.staticInventory),
     services: [],
     gatewayDiscoveryServiceIds: [],
     commands: [],

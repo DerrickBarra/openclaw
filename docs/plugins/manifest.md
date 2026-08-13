@@ -368,6 +368,15 @@ Use `commandAliases` when a plugin owns a runtime command name that users may
 mistakenly put in `plugins.allow` or try to run as a root CLI command. OpenClaw
 uses this metadata for diagnostics without importing plugin runtime code.
 
+Plugin status and inspect JSON expose these manifest declarations under
+`staticInventory.commandAliases`. They also expose
+`staticInventory.cliCommandHints`, using `commandAliases[].cliCommand` when
+present and falling back to `commandAliases[].name` only for aliases that are
+not `runtime-slash`. Bare `runtime-slash` aliases are chat commands, so they do
+not appear as CLI hints unless they declare an explicit `cliCommand`. These
+fields are declared inventory only: they do not mean the plugin runtime has
+registered a chat command or a root CLI command.
+
 ```json
 {
   "commandAliases": [
@@ -385,6 +394,12 @@ uses this metadata for diagnostics without importing plugin runtime code.
 | `name`       | Yes      | `string`          | Command name that belongs to this plugin.                               |
 | `kind`       | No       | `"runtime-slash"` | Marks the alias as a chat slash command rather than a root CLI command. |
 | `cliCommand` | No       | `string`          | Related root CLI command to suggest for CLI operations, if one exists.  |
+
+Runtime status fields stay separate from declared inventory. `cliCommands`
+lists root CLI commands registered by loaded plugin runtime code, and
+`httpRoutes` reports the count of HTTP routes registered by loaded plugin
+runtime code. OpenClaw does not backfill those runtime-owned fields from
+`commandAliases` or other manifest metadata.
 
 ## activation reference
 
@@ -444,12 +459,18 @@ other narrower activation triggers.
 | `onConfigPaths`    | No       | `string[]`                                           | Root-relative config paths that should include this plugin in startup/load plans when the path is present and not explicitly disabled.                                                      |
 | `onCapabilities`   | No       | `Array<"provider" \| "channel" \| "tool" \| "hook">` | Broad capability hints used by control-plane activation planning. Prefer narrower fields when possible.                                                                                     |
 
+Plugin status and inspect JSON expose `activation.onRoutes` as
+`staticInventory.routeActivationHints`. This is a cheap declared hint for
+planning and diagnostics only; registered HTTP route counts still come from
+runtime route registration.
+
 Current live consumers:
 
 - Gateway startup planning uses `activation.onStartup` for explicit startup
   import
 - command-triggered CLI planning falls back to legacy
-  `commandAliases[].cliCommand` or `commandAliases[].name`
+  `commandAliases[].cliCommand` or non-`runtime-slash`
+  `commandAliases[].name`
 - agent-runtime startup planning uses `activation.onAgentHarnesses` for
   embedded harnesses and top-level `cliBackends[]` for CLI runtime aliases
 - channel-triggered setup/channel planning falls back to legacy `channels[]`

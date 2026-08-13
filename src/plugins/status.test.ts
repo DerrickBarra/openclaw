@@ -677,6 +677,31 @@ describe("plugin status reports", () => {
     expect(plugin?.imported).toBe(true);
   });
 
+  it("normalizes missing static inventory on legacy plugin records", () => {
+    const legacyRecord = createPluginRecord({
+      id: "legacy-plugin",
+      commands: ["legacy-chat"],
+      cliCommands: [],
+      httpRoutes: 0,
+    });
+    delete legacyRecord.staticInventory;
+    setPluginLoadResult({ plugins: [legacyRecord] });
+
+    const report = buildPluginSnapshotReport({ config: {} });
+    expect(report.plugins[0]?.staticInventory).toEqual({
+      commandAliases: [],
+      cliCommandHints: [],
+      routeActivationHints: [],
+    });
+
+    const inspect = expectInspectReport("legacy-plugin");
+    expect(inspect.staticInventory).toEqual({
+      commandAliases: [],
+      cliCommandHints: [],
+      routeActivationHints: [],
+    });
+  });
+
   it("builds an inspect report with capability shape and policy", () => {
     loadConfigMock.mockReturnValue({
       plugins: {

@@ -264,6 +264,7 @@ export type {
   PluginRecord,
   PluginRegistry,
   PluginRegistryParams,
+  PluginStaticInventory,
   PluginTextTransformsRegistration,
   PluginToolMetadataRegistryRegistration,
   PluginTrustedToolPolicyRegistryRegistration,

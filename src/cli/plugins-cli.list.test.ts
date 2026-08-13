@@ -23,18 +23,22 @@ describe("plugins cli list", () => {
   });
 
   it("includes imported state in JSON output", async () => {
+    const plugin = createPluginRecord({
+      id: "demo",
+      imported: true,
+      activated: true,
+      explicitlyEnabled: true,
+      staticInventory: {
+        commandAliases: ["demo"],
+        cliCommandHints: ["plugins setup demo"],
+        routeActivationHints: ["webhook"],
+      },
+    });
     buildPluginRegistrySnapshotReport.mockReturnValue({
       workspaceDir: "/workspace",
       registrySource: "persisted",
       registryDiagnostics: [],
-      plugins: [
-        createPluginRecord({
-          id: "demo",
-          imported: true,
-          activated: true,
-          explicitlyEnabled: true,
-        }),
-      ],
+      plugins: [plugin],
       diagnostics: [],
     });
 
@@ -60,6 +64,11 @@ describe("plugins cli list", () => {
         imported?: boolean;
         activated?: boolean;
         explicitlyEnabled?: boolean;
+        staticInventory?: {
+          commandAliases: string[];
+          cliCommandHints: string[];
+          routeActivationHints: string[];
+        };
       }>;
       diagnostics?: unknown[];
     };
@@ -71,6 +80,11 @@ describe("plugins cli list", () => {
     expect(output.plugins?.[0]?.imported).toBe(true);
     expect(output.plugins?.[0]?.activated).toBe(true);
     expect(output.plugins?.[0]?.explicitlyEnabled).toBe(true);
+    expect(output.plugins?.[0]?.staticInventory).toEqual({
+      commandAliases: ["demo"],
+      cliCommandHints: ["plugins setup demo"],
+      routeActivationHints: ["webhook"],
+    });
     expect(output.diagnostics).toEqual([]);
   });
 
@@ -535,6 +549,11 @@ describe("plugins cli list", () => {
       tools: [],
       commands: [],
       cliCommands: [],
+      staticInventory: {
+        commandAliases: [],
+        cliCommandHints: [],
+        routeActivationHints: [],
+      },
       services: [],
       gatewayDiscoveryServices: [],
       mcpServers: [],
@@ -566,6 +585,65 @@ describe("plugins cli list", () => {
     expect(runtimeLogs.join("\n")).toContain("ClawPack size: 4096 bytes");
   });
 
+  it("includes declared static inventory in inspect JSON output", async () => {
+    buildPluginSnapshotReport.mockReturnValue({
+      plugins: [createPluginRecord({ id: "openclaw-mem0", name: "Mem0" })],
+      diagnostics: [],
+    });
+    buildPluginInspectReport.mockReturnValue({
+      workspaceDir: "/workspace",
+      plugin: createPluginRecord({ id: "openclaw-mem0", name: "Mem0" }),
+      shape: "hook-only",
+      capabilityMode: "plain",
+      capabilityCount: 1,
+      capabilities: [],
+      typedHooks: [],
+      customHooks: [],
+      tools: [],
+      commands: ["dreaming"],
+      cliCommands: [],
+      staticInventory: {
+        commandAliases: ["dreaming"],
+        cliCommandHints: ["memory"],
+        routeActivationHints: ["webhook"],
+      },
+      services: [],
+      gatewayDiscoveryServices: [],
+      mcpServers: [],
+      lspServers: [],
+      httpRouteCount: 0,
+      bundleCapabilities: [],
+      diagnostics: [],
+      policy: {
+        allowedModels: [],
+        hasAllowedModelsConfig: false,
+      },
+      usesLegacyBeforeAgentStart: false,
+      compatibility: [],
+    });
+
+    await runPluginsCommand(["plugins", "inspect", "openclaw-mem0", "--json"]);
+
+    const output = JSON.parse(runtimeLogs[0] ?? "null") as {
+      commands?: string[];
+      cliCommands?: string[];
+      staticInventory?: {
+        commandAliases: string[];
+        cliCommandHints: string[];
+        routeActivationHints: string[];
+      };
+      httpRouteCount?: number;
+    };
+    expect(output.commands).toEqual(["dreaming"]);
+    expect(output.cliCommands).toEqual([]);
+    expect(output.staticInventory).toEqual({
+      commandAliases: ["dreaming"],
+      cliCommandHints: ["memory"],
+      routeActivationHints: ["webhook"],
+    });
+    expect(output.httpRouteCount).toBe(0);
+  });
+
   it("runtime-inspects without repairing deps", async () => {
     buildPluginSnapshotReport.mockReturnValue({
       plugins: [createPluginRecord({ id: "openclaw-mem0", name: "Mem0" })],
@@ -583,6 +661,11 @@ describe("plugins cli list", () => {
       tools: [],
       commands: [],
       cliCommands: [],
+      staticInventory: {
+        commandAliases: [],
+        cliCommandHints: [],
+        routeActivationHints: [],
+      },
       services: [],
       gatewayDiscoveryServices: [],
       mcpServers: [],

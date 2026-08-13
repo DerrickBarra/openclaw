@@ -1,6 +1,7 @@
 /** Builds plugin status reports from persisted metadata without importing full plugin runtimes. */
 import { getRuntimeConfig } from "../config/config.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
+import { buildPluginStaticInventory } from "./loader-records.js";
 import { loadPluginMetadataSnapshot } from "./plugin-metadata-snapshot.js";
 import {
   loadPluginRegistrySnapshotWithMetadata,
@@ -111,6 +112,7 @@ function buildPluginRecordFromInstalledIndex(
     memoryEmbeddingProviderIds: [...(manifest?.contracts?.memoryEmbeddingProviders ?? [])],
     agentHarnessIds: [],
     cliCommands: [],
+    staticInventory: buildPluginStaticInventory(manifest),
     services: [],
     gatewayDiscoveryServiceIds: [],
     commands: [...(manifest?.commandAliases?.map((alias) => alias.name) ?? [])],
